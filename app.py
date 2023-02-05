@@ -6,6 +6,7 @@ from invoicer.config import load_config
 from invoicer.invoice import InvoiceGenerator
 from invoicer.log_config import init_root_logger
 import argparse
+from googleapiclient.errors import HttpError
 
 from invoicer.mail_account import InvoicerAccount
 
@@ -36,4 +37,10 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", help="Path to configuration json file", type=str, required=True)
     args = parser.parse_args()
     config = Path(args.config)
-    main(config=config)
+
+    while True:
+        try:
+            main(config=config)
+        except HttpError as error:
+            logging.exception("An error occured. Restarting the app after 60 seconds...")
+            sleep(60)
