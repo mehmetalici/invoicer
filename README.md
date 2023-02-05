@@ -33,24 +33,16 @@ Musterweg 123
 Deutschland
 +491761234567
 maxmustermann@email.de
-
---
-Diese Bestelldaten findest du auch in der Bestellübersicht auf deiner Webseite: https://www.muster-shop.de/ Einfach einloggen und über das Menü (auf der linken Seite) den Punkt "Shop" aufrufen.
-
-
-Für Shops mit Sitz in einem EU-Land: Aufgrund neuer EU-Regelungen zur Mehrwertsteuer gibt es Änderungen an deinem Onlineshop. Bitte stelle sicher, dass du bei all deinen Preisen bereits die MwSt. einkalkuliert hast.
-
-Befindet sich der Sitz deines Shops nicht in einem EU-Land, ändert sich nichts daran, wie die Mehrwertsteuer in deinem Shop angezeigt wird.
 ```
 
 The bot parses and converts it to the following print-ready invoice seconds after arrival to its inbox:
 
 ![](docs/template_customer-1.png)
 
-After generating above invoice, the bot sends it to the seller with email as attachment.
+After generating the invoice above, the bot sends it to the seller with email as attachment.
 
 ## Running a Demo
-A step-by-step instructions on how to run the application on your machine.
+Follow the instructions below to run a demo on your machine: 
 
 ### Prerequisites
 1. Poetry package manager
@@ -64,17 +56,16 @@ A step-by-step instructions on how to run the application on your machine.
 3. Microsoft Office Word 2016+
 
 ### Installation
-1. Clone repository:
+1. Clone repository and install dependencies:
     ```
     git clone git@github.com:mehmetalici/invoicer.git
-    ```
-
-2. Install dependencies:
-    ```
     cd invoicer
     poetry install
     ```
-3. Open `docs/template_sample.docx` with Word 2016+:
+
+2. Edit the invoice template:
+
+    To do this, Open `docs/template_sample.docx` with Word 2016+:
     ![](docs/template_ex-1.png)
 
 
@@ -107,13 +98,13 @@ A step-by-step instructions on how to run the application on your machine.
     - invoiceCountStart: Last invoice number before the start of Gmail bot
     - pollInterval: Period of polls in seconds for checking any incoming order confirmation emails 
     - invoiceTemplatePath: Path to your invoice template 
-    - OAuth2CredentialsPath: Path to your credentials file obtained from Google Cloud console.
+    - OAuth2CredentialsPath: Path to your credentials file obtained from Google Cloud console. Refer to the following step to create one.
 
 5. For Google OAuth Servers to identify the app, create a OAuth2 Client ID for the app following the instructions on below link:
 
      https://developers.google.com/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application 
 
-    Afterwards, save `credentials.json` to a secure directory. Take steps to protect and secure the file.  
+    Afterwards, save `credentials.json` to a secure directory and provide its path with `OAuth2AppCredentialsPath=/path/to/your/credentials.json` in `config.json` . Take steps to protect and secure the file.  
 ### Running
 1. Start the application with the following command:
     ```
@@ -128,3 +119,10 @@ A step-by-step instructions on how to run the application on your machine.
     2023-01-24 21:55:15 INFO     Searching for orders...
     ```
 4. If a new order confirmation mail appears, it will output the following:
+    ```
+    2023-02-05 13:48:39 INFO     Searching for orders...
+    2023-02-05 13:48:40 INFO     1 new orders are found, creating invoices...
+    2023-02-05 13:48:43 INFO     Invoice is created at docs/Invoice-2023001.docx
+    2023-02-05 13:48:45 INFO     Mail has been sent. Message Id: 186219f2db25b235
+    2023-02-05 13:48:45 INFO     Sleeping for 10s
+    ```
