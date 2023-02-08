@@ -61,7 +61,7 @@ class OrderMailParser:
 
     @handle_exception
     def find_payment_method(self, short=True):
-        p = re.compile(r"Bezahlmethode: (.+)\\r\\n\*Rechnungs")
+        p = re.compile(r"Bezahlmethode: (.+)\\r\\n\\r\\n\\*Rechnungs")
         payment_method = p.search(self.body).group(1).rstrip()
         if short:
             return _simplify_payment_method(payment_method)
