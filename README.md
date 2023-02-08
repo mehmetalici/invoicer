@@ -91,14 +91,14 @@ Follow the instructions below to run a demo on your machine:
     }
     ```
     **Explanation for the fields**:
-    - orderMail.sender: Email account sending order confirmations
-    - orderMail.subjectHas: A substring in subject line for order confirmation emails
-    - invoiceMail.to: Email address to send the generated invoice
-    - invoiceMail.saluteName: Salutation name for the email address holder
-    - invoiceCountStart: Last invoice number before the start of Gmail bot
-    - pollInterval: Period of polls in seconds for checking any incoming order confirmation emails 
-    - invoiceTemplatePath: Path to your invoice template 
-    - OAuth2CredentialsPath: Path to your credentials file obtained from Google Cloud console. Refer to the following step to create one.
+    - **orderMail.sender**: Email account sending order confirmations
+    - **orderMail.subjectHas**: A substring in subject line for order confirmation emails
+    - **invoiceMail.to**: Email address to send the generated invoice
+    - **invoiceMail.saluteName**: Salutation name for the email address holder
+    - **invoiceCountStart**: Last invoice number before the start of Gmail bot
+    - **pollInterval**: Period of polls in seconds for checking any incoming order confirmation emails 
+    - **invoiceTemplatePath**: Path to your invoice template 
+    - **OAuth2CredentialsPath**: Path to your credentials file obtained from Google Cloud console. Refer to the following step to create one.
 
 5. For Google OAuth Servers to identify the app, create a OAuth2 Client ID for the app following the instructions on below link:
 
