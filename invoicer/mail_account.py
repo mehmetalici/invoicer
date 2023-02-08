@@ -240,7 +240,7 @@ def create_invoice_mail_body(salute_name: str, order: Order, errors: Optional[Li
     if errors and len(errors) > 0:
         html += f"""
             <b>aber leider konnte ich die Rechnung#{order.invoice.number} nicht erfolgreich erstellen.</b>
-            Ich hatte Probleme mit den folgenden Feldern:{'<br>'.join(errors)}.<br>
+            Ich hatte Probleme mit den folgenden Feldern:{'<br/>'.join(errors)}.<br/>
             <b>Bitte fülle die Felder manuell aus.</b>
         """
     else:
