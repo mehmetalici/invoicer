@@ -41,6 +41,6 @@ if __name__ == "__main__":
     while True:
         try:
             main(config=config)
-        except HttpError as error:
+        except Exception:
             logging.exception("An error occured. Restarting the app after 60 seconds...")
             sleep(60)
