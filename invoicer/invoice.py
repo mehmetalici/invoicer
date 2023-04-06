@@ -36,11 +36,11 @@ class InvoiceGenerator:
         except FileNotFoundError:
             last_invoice_count = self.config.invoiceCountStart
 
-        invoice_count = last_invoice_count + 1
+        invoice_count = str(last_invoice_count + 1)
 
-        if invoice_count < 10:
+        if int(invoice_count) < 10:
             invoice_count = f"00{invoice_count}"
-        elif invoice_count < 100:
+        elif int(invoice_count) < 100:
             invoice_count = f"0{invoice_count}"
 
         invoice_nr = str(year_invoice) + invoice_count
