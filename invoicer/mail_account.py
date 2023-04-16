@@ -26,7 +26,7 @@ from invoicer.order_mail_parsers import order_from_mail
 
 
 class GmailAccount:
-    def __init__(self, oauth2_app_credentials_path: Path) -> None:
+    def __init__(self, oauth2_app_credentials_path: str) -> None:
         # If modifying these scopes, delete the file token.json.
         self.scopes = [
             "https://www.googleapis.com/auth/gmail.modify",
@@ -59,7 +59,9 @@ class GmailAccount:
         labels = result["labels"]
         return labels
 
-    def _authorize(self, oauth2_app_credentials_path):
+    def _authorize(self, oauth2_app_credentials_path: str):
+        # oauth2_app_credentials_path = Path(oauth2_app_credentials_path).absolute()
+        print(oauth2_app_credentials_path)
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
