@@ -24,7 +24,6 @@ class Config:
     invoiceCountStart: int
     pollInterval: int
     invoiceTemplatePath: str
-    OAuth2AppCredentialsPath: str
 
 
 def load_config(path: Path):

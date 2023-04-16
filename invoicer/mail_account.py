@@ -26,13 +26,13 @@ from invoicer.order_mail_parsers import order_from_mail
 
 
 class GmailAccount:
-    def __init__(self, oauth2_app_credentials_path: str) -> None:
+    def __init__(self, oauth2_app_credentials_file: Path) -> None:
         # If modifying these scopes, delete the file token.json.
         self.scopes = [
             "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/gmail.settings.basic",
         ]
-        creds = self._authorize(oauth2_app_credentials_path)
+        creds = self._authorize(oauth2_app_credentials_file)
         self.service = build("gmail", "v1", credentials=creds)
 
     def create_label(self, name: str):
@@ -59,9 +59,7 @@ class GmailAccount:
         labels = result["labels"]
         return labels
 
-    def _authorize(self, oauth2_app_credentials_path: str):
-        # oauth2_app_credentials_path = Path(oauth2_app_credentials_path).absolute()
-        print(oauth2_app_credentials_path)
+    def _authorize(self, oauth2_app_credentials_file: Path):
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -74,7 +72,7 @@ class GmailAccount:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    oauth2_app_credentials_path, self.scopes
+                    oauth2_app_credentials_file, self.scopes
                 )
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
@@ -173,10 +171,10 @@ class GmailAccount:
 
 
 class InvoicerAccount:
-    def __init__(self, cfg: Config) -> None:
+    def __init__(self, cfg: Config, creds: Path) -> None:
         super().__init__()
         self.cfg = cfg
-        self._mailing = GmailAccount(oauth2_app_credentials_path=self.cfg.OAuth2AppCredentialsPath)
+        self._mailing = GmailAccount(oauth2_app_credentials_file=creds)
         self.invoiced_label_id = self._mailing.create_label("Invoiced")
     
     def search_new_orders(self) -> Tuple[Order]:

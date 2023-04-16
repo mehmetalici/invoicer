@@ -11,11 +11,11 @@ from googleapiclient.errors import HttpError
 from invoicer.mail_account import InvoicerAccount
 
 
-def main(config: Path):
-    cfg = load_config(path=config)
+def main(config_file: Path, credentials_file: Path):
+    config = load_config(path=config_file)
     init_root_logger()
-    invoicer_account = InvoicerAccount(cfg=cfg)
-    invoice_generator = InvoiceGenerator(cfg=cfg)
+    invoicer_account = InvoicerAccount(cfg=config, creds=credentials_file)
+    invoice_generator = InvoiceGenerator(cfg=config)
 
     while True:
         logging.info(f"Searching for orders...")
@@ -28,19 +28,21 @@ def main(config: Path):
                 invoicer_account.send_invoice(order=order, errors=errors, invoice=invoice_path, delete_invoice=True)
         else:
             logging.info(f"No new orders are found.")
-        logging.info(f"Sleeping for {cfg.pollInterval}s")
-        sleep(cfg.pollInterval)
+        logging.info(f"Sleeping for {config.pollInterval}s")
+        sleep(config.pollInterval)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", help="Path to configuration json file", type=str, required=True)
+    parser.add_argument("-d", "--credentials", help="Path to credentials json file", type=str, required=True)
     args = parser.parse_args()
     config = Path(args.config)
+    credentials = Path(args.credentials)
 
     while True:
         try:
-            main(config=config)
+            main(config_file=config, credentials_file=credentials)
         except Exception:
             logging.exception("An error occured. Restarting the app after 60 seconds...")
             sleep(60)
