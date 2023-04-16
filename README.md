@@ -1,7 +1,7 @@
 # invoicer
 A Gmail bot that generates invoices from order confirmation emails and sends it to seller in real-time.
 
-For example, given the incoming order confirmation email:
+For example, given the incoming order confirmation email (in German):
 
 ```
 Hallo!
@@ -42,38 +42,20 @@ The bot parses and converts it to the following print-ready invoice seconds afte
 After generating the invoice above, the bot sends it to the seller with email as attachment.
 
 ## Running a Demo
-Follow the instructions below to run a demo on your machine: 
+You can run a demo by either of the following:
+1. Running a Docker image (recommended);
+2. Cloning the application to your system. 
 
+For both options, you should first do the prerequisites:
 ### Prerequisites
-1. Poetry package manager
-    
-    Install it from https://python-poetry.org/docs/.
-
-2. Python ^3.10.7
-
-    You can use Pyenv https://github.com/pyenv/pyenv.
-
-3. Microsoft Office Word 2016+
-
-### Installation
-1. Clone repository and install dependencies:
-    ```
-    git clone git@github.com:mehmetalici/invoicer.git
-    cd invoicer
-    poetry install
-    ```
-
-2. Edit the invoice template:
-
-    To do this, Open `docs/template_sample.docx` with Word 2016+:
-    ![](docs/template_ex-1.png)
+1. Open the invoice template at `docs/template_sample.docx` with Word 2016+:
+![](docs/template_ex-1.png)
 
 
     Customize the template according to your wishes. You can add extra text, images etc.
-    
-    Note that you should treat the text within '{{}}' as special and not replace the characters inside of it. You can, however, move them freely throughout the document. Do not change the column number in the table as well.   
 
-4. Create a `config.json` similar to the following sample and edit it according to your specs. You can refer to the explanation section for clarifications.
+    Note that you should treat the text within '{{}}' as special and not replace the characters inside of it. You can, however, move them freely throughout the document. Do not change the column number in the table as well.   
+    Create a `config.json` similar to the following sample and edit it according to your specs. You can refer to the explanation section for clarifications.
     ```json
     {
         "orderMail": {
@@ -104,21 +86,53 @@ Follow the instructions below to run a demo on your machine:
 
      https://developers.google.com/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application 
 
-    Afterwards, save `credentials.json` to a secure directory and provide its path with `OAuth2AppCredentialsPath=/path/to/your/credentials.json` in `config.json` . Take steps to protect and secure the file.  
-### Running
-1. Start the application with the following command:
+    Afterwards, save `credentials.json` to a directory and take steps to protect and secure the file. We will pass it later to our application.
+
+
+After fulfilling above prerequisites, choose either one of the following:
+### Option 1: Using Docker Image (Recommended)
+Firstly, Install Docker through https://docs.docker.com/engine/install/ if you haven't done yet.
+
+Follow these steps to start the application in a Docker container:
+
+```
+docker pull ghcr.io/mehmetalici/invoicer:latest
+docker run invoicer -v /path/to/your/config.json:/etc/invoicer/config.json -v /path/to/your/credentials.json:/etc/invoicer/credentials.json
+```
+
+### Option 2: Manual Installation
+#### Prerequisites
+1. Poetry package manager
+    
+    Install it from https://python-poetry.org/docs/.
+
+2. Python ^3.10.7
+
+    You can use Pyenv https://github.com/pyenv/pyenv.
+
+#### Installation
+1. Clone repository and install dependencies:
     ```
-    poetry run python app.py -c config.json
+    git clone git@github.com:mehmetalici/invoicer.git
+    cd invoicer
+    poetry install
     ```
-2. If you run for the first time, a web page will prompt you to authenticate your Gmail account and authorize the bot to manage the account.
-3. After the authentication flow has completed, the app will start to its normal operation and output the following information:
+
+2. Start the application with the following command:
+    ```
+    poetry run python app.py -c /path/to/your/config.json -d /path/to/your/credentials.json
+    ```
+
+### Operation
+1. If you run for the first time, a web page will prompt you to authenticate your Gmail account and authorize the bot to manage the account.
+2. After the authentication flow has completed, the app will start to its normal operation and output the following information:
     ```
     2023-01-24 21:55:05 INFO     Searching for orders...
     2023-01-24 21:55:05 INFO     No new orders are found.
     2023-01-24 21:55:05 INFO     Sleeping for 10s
     2023-01-24 21:55:15 INFO     Searching for orders...
     ```
-4. If a new order confirmation mail appears, it will output the following:
+3. If a new order confirmation mail appears, it will output the following:
     ```
     2023-02-05 13:48:39 INFO     Searching for orders...
     2023-02-05 13:48:40 INFO     1 new orders are found, creating invoices...
