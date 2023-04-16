@@ -14,3 +14,7 @@ def get_year(date: str):
 
 def eur(value: float):
     return format_currency(value, "EUR", locale="de_DE")
+
+
+def prepend_zeros(value: str, num_min_digits: int):
+    return "0" * (num_min_digits - len(value)) + value
