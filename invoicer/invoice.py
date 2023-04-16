@@ -15,7 +15,7 @@ from gender_guesser.detector import NoCountryError
 from invoicer.config import Config
 from invoicer.order import Address, Customer, Invoice, Item, Order
 from invoicer.order_mail_parsers import find_country_index
-from invoicer.utils import eur, get_short_date, get_year
+from invoicer.utils import eur, get_short_date, get_year, prepend_zeros
 
 
 Font = namedtuple("Font", ("name", "size"))
@@ -37,11 +37,7 @@ class InvoiceGenerator:
             last_invoice_count = self.config.invoiceCountStart
 
         invoice_count = str(last_invoice_count + 1)
-
-        if int(invoice_count) < 10:
-            invoice_count = f"00{invoice_count}"
-        elif int(invoice_count) < 100:
-            invoice_count = f"0{invoice_count}"
+        invoice_count = prepend_zeros(value=invoice_count, num_min_digits=3) 
 
         invoice_nr = str(year_invoice) + invoice_count
 
