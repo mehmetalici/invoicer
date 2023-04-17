@@ -74,7 +74,7 @@ class GmailAccount:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     oauth2_app_credentials_file, self.scopes
                 )
-                creds = flow.run_local_server(port=1025)
+                creds = flow.run_local_server(port=1025, bind_addr="host.containers.internal")
             # Save the credentials for the next run
             with open("token.json", "w") as token:
                 token.write(creds.to_json())
