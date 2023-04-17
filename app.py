@@ -11,10 +11,10 @@ from googleapiclient.errors import HttpError
 from invoicer.mail_account import InvoicerAccount
 
 
-def main(config_file: Path, credentials_file: Path):
+def main(config_file: Path, credentials_file: Path, token_file: Path):
     config = load_config(path=config_file)
     init_root_logger()
-    invoicer_account = InvoicerAccount(cfg=config, creds=credentials_file)
+    invoicer_account = InvoicerAccount(cfg=config, creds=credentials_file, token=token_file)
     invoice_generator = InvoiceGenerator(cfg=config)
 
     while True:
@@ -36,13 +36,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", help="Path to configuration json file", type=str, required=True)
     parser.add_argument("-d", "--credentials", help="Path to credentials json file", type=str, required=True)
+    parser.add_argument("-t", "--token", help="Path to token json file. If invalid or unspecified, app will use web-authorization flow.", type=str, required=False)
     args = parser.parse_args()
     config = Path(args.config)
     credentials = Path(args.credentials)
+    token = Path(args.token)
 
     while True:
         try:
-            main(config_file=config, credentials_file=credentials)
+            main(config_file=config, credentials_file=credentials, token_file=token)
         except Exception:
             logging.exception("An error occured. Restarting the app after 60 seconds...")
             sleep(60)

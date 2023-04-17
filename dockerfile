@@ -6,5 +6,5 @@ ENV poetry=/root/.local/bin/poetry
 RUN $poetry config virtualenvs.create false \
   && $poetry install --no-interaction --no-ansi
 RUN mkdir /etc/invoicer
-CMD $poetry run python3 app.py -c /etc/invoicer/config.json -d /etc/invoicer/credentials.json
+CMD $poetry run python3 app.py -c /etc/invoicer/config.json -d /etc/invoicer/credentials.json -t /etc/invoicer/token.json
 
