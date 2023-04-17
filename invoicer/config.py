@@ -23,7 +23,6 @@ class Config:
     invoiceMail: InvoiceMailCfg
     invoiceCountStart: int
     pollInterval: int
-    invoiceTemplatePath: str
 
 
 def load_config(path: Path):

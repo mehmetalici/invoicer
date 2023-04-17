@@ -24,10 +24,11 @@ Replacement = namedtuple("Replacement", ("old", "new", "font"))
 
 
 class InvoiceGenerator:
-    def __init__(self, cfg: Config) -> None:
+    def __init__(self, cfg: Config, template_path: Path) -> None:
         self.default_font = Font("Arial", 11)
         self.table_indices = TableIndices(items=0, sum=1, passport=2)
         self.config = cfg
+        self.template_path = template_path
 
     def _create_invoice_nr(self, year_invoice: int):
         try:
@@ -95,7 +96,7 @@ class InvoiceGenerator:
             dump_errors_path=Path(f"Invoice-{order.invoice.number}-Errors.txt")
         )
         
-        invoice = Document(self.config.invoiceTemplatePath)
+        invoice = Document(self.template_path)
 
         self._replace_paragraphs(order=order, invoice=invoice)
         self._replace_tables(order=order, invoice=invoice)
