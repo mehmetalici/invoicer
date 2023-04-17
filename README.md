@@ -97,7 +97,7 @@ Follow these steps to start the application in a Docker container:
 
 ```
 docker pull ghcr.io/mehmetalici/invoicer:latest
-docker run -it -v /path/to/your/config.json:/etc/invoicer/config.json -v /path/to/your/credentials.json:/etc/invoicer/credentials.json --network=host invoicer 
+docker run -it -v /path/to/your/config.json:/etc/invoicer/config.json -v /path/to/your/credentials.json:/etc/invoicer/credentials.json -v /path/to/your/template.docx:/etc/invoicer/template.docx --network=host invoicer 
 ```
 
 ### Option 2: Manual Installation
