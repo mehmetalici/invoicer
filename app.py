@@ -11,11 +11,11 @@ from googleapiclient.errors import HttpError
 from invoicer.mail_account import InvoicerAccount
 
 
-def main(config_file: Path, credentials_file: Path, token_file: Path):
+def main(config_file: Path, credentials_file: Path, token_file: Path, template_file: Path):
     config = load_config(path=config_file)
     init_root_logger()
     invoicer_account = InvoicerAccount(cfg=config, creds=credentials_file, token=token_file)
-    invoice_generator = InvoiceGenerator(cfg=config)
+    invoice_generator = InvoiceGenerator(cfg=config, template_path=template_file)
 
     while True:
         logging.info(f"Searching for orders...")
@@ -36,15 +36,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", help="Path to configuration json file", type=str, required=True)
     parser.add_argument("-d", "--credentials", help="Path to credentials json file", type=str, required=True)
-    parser.add_argument("-t", "--token", help="Path to token json file. If invalid or unspecified, app will use web-authorization flow.", type=str, required=False)
+    parser.add_argument("-t", "--token", help="Path to token json file. If unspecified, app will create one with web-auth flow.", type=str, required=False)
+    parser.add_argument("-p", "--template", help="Path to template docx file.", type=str, required=True)
     args = parser.parse_args()
     config = Path(args.config)
     credentials = Path(args.credentials)
-    token = Path(args.token)
+    template = Path(args.template)
+    if args.token is None:
+        token = ".token.json"
+    else:
+        token = Path(args.token)
 
     while True:
         try:
-            main(config_file=config, credentials_file=credentials, token_file=token)
+            main(config_file=config, credentials_file=credentials, token_file=token, template_file=template)
         except Exception:
             logging.exception("An error occured. Restarting the app after 60 seconds...")
             sleep(60)
