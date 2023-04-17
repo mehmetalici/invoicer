@@ -26,13 +26,13 @@ from invoicer.order_mail_parsers import order_from_mail
 
 
 class GmailAccount:
-    def __init__(self, oauth2_app_credentials_file: Path) -> None:
+    def __init__(self, oauth2_app_credentials_file: Path, token_file: Path) -> None:
         # If modifying these scopes, delete the file token.json.
         self.scopes = [
             "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/gmail.settings.basic",
         ]
-        creds = self._authorize(oauth2_app_credentials_file)
+        creds = self._authorize(oauth2_app_credentials_file, token_file=token_file)
         self.service = build("gmail", "v1", credentials=creds)
 
     def create_label(self, name: str):
@@ -59,13 +59,13 @@ class GmailAccount:
         labels = result["labels"]
         return labels
 
-    def _authorize(self, oauth2_app_credentials_file: Path):
+    def _authorize(self, oauth2_app_credentials_file: Path, token_file: Path):
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists("token.json"):
-            creds = Credentials.from_authorized_user_file("token.json", self.scopes)
+        if os.path.exists(token_file):
+            creds = Credentials.from_authorized_user_file(token_file, self.scopes)
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -76,7 +76,7 @@ class GmailAccount:
                 )
                 creds = flow.run_local_server(port=1025)
             # Save the credentials for the next run
-            with open("token.json", "w") as token:
+            with open(token_file, "w") as token:
                 token.write(creds.to_json())
         return creds
 
@@ -171,10 +171,10 @@ class GmailAccount:
 
 
 class InvoicerAccount:
-    def __init__(self, cfg: Config, creds: Path) -> None:
+    def __init__(self, cfg: Config, creds: Path, token: Path) -> None:
         super().__init__()
         self.cfg = cfg
-        self._mailing = GmailAccount(oauth2_app_credentials_file=creds)
+        self._mailing = GmailAccount(oauth2_app_credentials_file=creds, token_file=token)
         self.invoiced_label_id = self._mailing.create_label("Invoiced")
     
     def search_new_orders(self) -> Tuple[Order]:
