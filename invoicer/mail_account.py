@@ -153,12 +153,12 @@ class GmailAccount:
 
             encoded_message = base64.urlsafe_b64encode(mime_message.as_bytes()).decode()
 
-            create_message = {"raw": encoded_message}
+            created_message = {"raw": encoded_message}
             # pylint: disable=E1101
             send_message = (
                 self.service.users()
                 .messages()
-                .send(userId="me", body=create_message)
+                .send(userId="me", body=created_message)
                 .execute()
             )
             logging.info(f'Mail has been sent. Message Id: {send_message["id"]}')

@@ -129,9 +129,7 @@ dmypy.json
 .pyre/
 
 
-token.json
-credentials.json
-config.json
+.token.json
 .vscode
 .last_invoice_count
 docs/Invoice*
