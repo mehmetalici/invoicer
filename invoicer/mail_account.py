@@ -80,14 +80,13 @@ class GmailAccount:
                 token.write(creds.to_json())
         return creds
 
-    def search_mails(self, sender: str, subject_has: str, query: str) -> Tuple[Mail]:
-        msg_ids = self._list_mail_ids(sender=sender, subject_has=subject_has, query=query)
+    def search_mails(self, query: str) -> Tuple[Mail]:
+        msg_ids = self._list_mail_ids(query=query)
         gmails = self._get_mails(msg_ids=msg_ids)
         mails = tuple(map(from_gmail, gmails))
         return mails
 
-    def _list_mail_ids(self, sender: str, subject_has: str, query: str) -> List[str]:
-        query = f'from:{sender} subject:"{subject_has}" {query}'
+    def _list_mail_ids(self, query: str) -> List[str]:
         maxResults = 100
         result = (
             self.service.users()
@@ -148,8 +147,9 @@ class GmailAccount:
             text = MIMEText(html, "html")
             mime_message.attach(text)
 
-            for path in mail.attachments:
-                attach_file(mime_message, path)
+            if mail.attachments:
+                for path in mail.attachments:
+                    attach_file(mime_message, path)
 
             encoded_message = base64.urlsafe_b64encode(mime_message.as_bytes()).decode()
 
@@ -161,7 +161,7 @@ class GmailAccount:
                 .send(userId="me", body=created_message)
                 .execute()
             )
-            logging.info(f'Mail has been sent. Message Id: {send_message["id"]}')
+            # logging.info(f'Mail has been sent. Message Id: {send_message["id"]}')
             ident = send_message["id"]
 
         except HttpError as error:
@@ -169,22 +169,63 @@ class GmailAccount:
             ident = None
         return ident
 
-
+# TODO: Change InvoicerAccount -> OrderAccount
 class InvoicerAccount:
     def __init__(self, cfg: Config, creds: Path, token: Path) -> None:
         super().__init__()
         self.cfg = cfg
         self._mailing = GmailAccount(oauth2_app_credentials_file=creds, token_file=token)
         self.invoiced_label_id = self._mailing.create_label("Invoiced")
-    
+        # TODO: Create MailLabel dataclass
+        self.forwarded_label_id = self._mailing.create_label("Forwarded")
+
     def search_new_orders(self) -> Tuple[Order]:
         mails = self._mailing.search_mails(
-            sender=self.cfg.orderMail.sender,
-            subject_has=self.cfg.orderMail.subjectHas,
-            query="-label:Invoiced"
+            query=f'from:{self.cfg.orderMail.sender} subject:"{self.cfg.orderMail.subjectHas}" -label:Invoiced'
         )
         orders = tuple(map(order_from_mail, mails))
         return orders
+
+    def search_new_customer_mails(self) -> Tuple[Mail]:
+        senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:amazon.com from:amazonaws.com from:signup.aws from:google.com"
+        # TODO: After date fix to release date
+        mails = self._mailing.search_mails(
+            query=f"-{{{senders_to_exclude}}} in:inbox -label:Forwarded after:2023/05/06"
+        )
+        return mails
+
+    def forward_customer_mail(self, customer_mail: Mail) -> None:
+        html = create_forward_mail_body(customer_mail=customer_mail, salute_name=self.cfg.invoiceMail.saluteName)
+        # body = MailBodyGenerator.get_forward_reply_body(reply=reply, cfg=self.cfg)
+        mail = Mail(
+            sender="me",
+            to=self.cfg.invoiceMail.to,
+            subject="Neue Kunden-E-Mail",
+            html=html
+        )
+        self._mailing.send_mail(mail=mail)
+        self._mailing.add_label(
+            mail_id=customer_mail.ident,
+            label_id=self.forwarded_label_id
+        )
+
+    def inform_customer_forwarded(self, customer_mail: Mail):
+        # body = MailBodyGenerator.get_inform_forwarded_body(reply=reply, cfg=self.cfg)
+        html = create_inform_forwarded_mail_body(forward_address=self.cfg.invoiceMail.to)
+        mail = Mail(
+            sender="me",
+            to=customer_mail.sender,
+            subject=f"AW: {customer_mail.subject}",
+            html=html
+        )
+        self._mailing.send_mail(mail=mail)
+
+    # def forward_new_replies_to_seller(inform_customer=True):
+        # replies = self.search_new_replies()
+        # for reply in replies:
+            # self.forward_reply(reply)
+            # self.inform_customer_forwarded(reply)
+            # self.gmail.label_mail(id=reply.id, label="Forwarded")
 
     def send_invoice(self, order: Order, invoice: Path, delete_invoice=True, errors: Optional[List[str]] = None):
         html = create_invoice_mail_body(salute_name=self.cfg.invoiceMail.saluteName, order=order, errors=errors)
@@ -270,3 +311,52 @@ def create_invoice_mail_body(salute_name: str, order: Order, errors: Optional[Li
         <pre>{order.source_mail.html}</pre>
     """
     return html
+
+
+def create_forward_mail_body(customer_mail: Mail, salute_name: str):
+    html = f"""
+        Hallo {salute_name},
+
+        <p>
+        ich habe eine neue E-Mail in meinem Posteingang erhalten und möchte sie mit dieser E-Mail mit dir teilen.
+        </p>
+
+        <p>
+        Wenn du darauf antworten möchtest, antworte bitte <b>nicht<b> auf diese E-Mail und erstelle stattdessen eine neue E-Mail für den Absender. 
+        </p>
+        <p>
+            Sonnige Grüße &#9728;&#65039;,<br>
+            Dein Bot<br>
+        </p> 
+
+        <p>
+            From: {customer_mail.sender}<br>
+            To: {customer_mail.to}<br>
+            Subject: {customer_mail.subject}<br>
+            Date: {customer_mail.date}<br>
+        </p>
+        <pre>{customer_mail.html}</pre>
+    """
+    return html
+
+
+def create_inform_forwarded_mail_body(forward_address: str):
+    html = f"""
+        Sehr geehrte(r) Absender(in),
+        <p>
+        vielen Dank für Ihre Kontaktaufnahme. Ihre E-Mail wurde an {forward_address} weitergeleitet und wird so schnell wie möglich bearbeitet.
+        </p>
+        <p>
+        Dies ist eine automatische Antwort, bitte antworten Sie nicht darauf.
+        </p>
+        <p>
+            Viele Grüße,<br>
+            Ihr Laden <br>
+        </p> 
+    """
+    return html
+
+
+# def search_and_forward():
+    # search_customer_replies()
+    # 
