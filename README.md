@@ -41,6 +41,9 @@ The bot parses and converts it to the following print-ready invoice seconds afte
 
 After generating the invoice above, the bot sends it to the seller with email as attachment.
 
+## New: Replying Customer Emails
+Occassionally, customers send emails to the Invoicer email address and they may left unanswered as the account is a service account. To fix this problem, the bot now forwards these emails to seller and informs the customer about the forwarding. 
+
 ## Running a Demo
 You can run a demo by either of the following:
 1. Running a Docker image (recommended);
@@ -120,7 +123,7 @@ docker run -it -v /path/to/your/config.json:/etc/invoicer/config.json -v /path/t
 
 2. Start the application with the following command:
     ```
-    poetry run python app.py -c /path/to/your/config.json -d /path/to/your/credentials.json
+    poetry run python app.py -c /path/to/your/config.json -d /path/to/your/credentials.json -p /path/to/your/template.docx
     ```
 
 ### Operation
