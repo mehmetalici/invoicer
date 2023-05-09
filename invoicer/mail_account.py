@@ -190,7 +190,7 @@ class InvoicerAccount:
         senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:amazon.com from:amazonaws.com from:signup.aws from:google.com"
         # TODO: After date fix to release date
         mails = self._mailing.search_mails(
-            query=f"-{{{senders_to_exclude}}} in:inbox -label:Forwarded after:2023/05/06"
+            query=f"-{{{senders_to_exclude}}} in:inbox -label:Forwarded after:2023/05/07"
         )
         return mails
 
