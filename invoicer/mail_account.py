@@ -319,14 +319,15 @@ def create_invoice_mail_body(salute_name: str, order: Order, errors: Optional[Li
 def create_forward_mail_body(customer_mail: Mail, salute_name: str):
     html = f"""
         Hallo {salute_name},
-
+        <p/>
         <p>
         ich habe eine neue E-Mail in meinem Posteingang erhalten und möchte sie mit dieser E-Mail mit dir teilen.
         </p>
-
+        <p/>
         <p>
-        Wenn du darauf antworten möchtest, antworte bitte <b>nicht<b> auf diese E-Mail und erstelle stattdessen eine neue E-Mail für den Absender. 
+        Wenn du darauf antworten möchtest, antworte bitte <b>nicht</b> auf diese E-Mail und erstelle stattdessen eine neue E-Mail für den Absender. 
         </p>
+        <p/>
         <p>
             Sonnige Grüße &#9728;&#65039;,<br>
             Dein Bot<br>
