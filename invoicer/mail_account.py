@@ -331,7 +331,8 @@ def create_forward_mail_body(customer_mail: Mail, salute_name: str):
             Sonnige Grüße &#9728;&#65039;,<br>
             Dein Bot<br>
         </p> 
-
+        <p/>
+        <p> ---- Original Email ---- </p>
         <p>
             From: {customer_mail.sender}<br>
             To: {customer_mail.to}<br>
