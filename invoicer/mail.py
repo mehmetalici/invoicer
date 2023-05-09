@@ -33,7 +33,8 @@ def payload_to_mail(payload: dict, ident: str) -> Mail:
     mime_type = payload["mimeType"]
     plain_text_encoded = None
     html_encoded = None
-    if mime_type == "multipart/*":
+    # TODO: Is this safe?
+    if "multipart/" in mime_type:
         plain_text_encoded = payload["parts"][0]["body"]["data"]
         html_encoded = payload["parts"][1]["body"]["data"]
     elif mime_type == "text/plain":
