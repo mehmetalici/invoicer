@@ -142,11 +142,14 @@ class GmailAccount:
             mime_message["Subject"] = mail.subject
             # mime_message["Content-Type"] = "text/html"
 
-            # Add the HTML message body
-            html = mail.html
-            text = MIMEText(html, "html")
-            mime_message.attach(text)
-
+            if mail.html:
+                # Add the HTML message body
+                html = mail.html
+                text = MIMEText(html, "html")
+                mime_message.attach(text)
+            elif mail.plain_text:
+                text = MIMEText(mail.plain_text, "plain")
+                mime_message.attach(text)
             if mail.attachments:
                 for path in mail.attachments:
                     attach_file(mime_message, path)
