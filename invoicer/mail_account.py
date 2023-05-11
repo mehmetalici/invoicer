@@ -142,14 +142,10 @@ class GmailAccount:
             mime_message["Subject"] = mail.subject
             # mime_message["Content-Type"] = "text/html"
 
-            if mail.html:
-                # Add the HTML message body
-                html = mail.html
-                text = MIMEText(html, "html")
-                mime_message.attach(text)
-            elif mail.plain_text:
-                text = MIMEText(mail.plain_text, "plain")
-                mime_message.attach(text)
+            # Add the HTML message body
+            html = mail.html
+            text = MIMEText(html, "html")
+            mime_message.attach(text)
             if mail.attachments:
                 for path in mail.attachments:
                     attach_file(mime_message, path)
@@ -340,8 +336,15 @@ def create_forward_mail_body(customer_mail: Mail, salute_name: str):
             Subject: {customer_mail.subject}<br>
             Date: {customer_mail.date}<br>
         </p>
-        <pre>{customer_mail.html}</pre>
     """
+    if customer_mail.html:
+        html += f"""
+            <pre>{customer_mail.html}</pre>
+        """
+    elif customer_mail.plain_text:
+        html += customer_mail.plain_text
+    else:
+        html += "Beim Erfassen der Kundenpost ist ein Fehler aufgetreten. Bitte informieren Sie den Entwickler."
     return html
 
 
