@@ -83,8 +83,32 @@ class GmailAccount:
     def search_mails(self, query: str) -> Tuple[Mail]:
         msg_ids = self._list_mail_ids(query=query)
         gmails = self._get_mails(msg_ids=msg_ids)
-        mails = tuple(map(from_gmail, gmails))
-        return mails
+        mails = [self._get_mail(g) for g in gmails]
+        return tuple(mails)
+
+    def _get_mail(self, gmail: dict):
+        mail, gmail_attachments = from_gmail(gmail)
+        if len(gmail_attachments) > 0:
+            for gmail_attachment in gmail_attachments:
+                out_path = gmail_attachment.filename
+                self._get_attachment(
+                    msg_id=mail, att_id=gmail_attachment.ident, out_path=Path(out_path)
+                )
+                mail.attachments.append(out_path)
+        return mail
+
+    def _get_attachment(self, msg_id: str, att_id: str, out_path: Path):
+        att = (
+            self.service.users()
+            .messages()
+            .attachments()
+            .get(userId="me", messageId=msg_id, id=att_id)
+            .execute()
+        )
+        data = att["data"]
+        file_data = base64.urlsafe_b64decode(data)
+        out_path.write_bytes(file_data)
+
 
     def _list_mail_ids(self, query: str) -> List[str]:
         maxResults = 100
@@ -123,7 +147,7 @@ class GmailAccount:
             userId="me", id=mail_id, body=body
         ).execute()
 
-    def send_mail(self, mail: Mail):
+    def send_mail(self, mail: Mail, delete_attachments=False):
         """Create and insert a draft email with attachment.
         Print the returned draft's message and id.
         Returns: Draft object, including draft id and message meta data.
@@ -166,6 +190,10 @@ class GmailAccount:
         except HttpError as error:
             logging.error(f"An error occurred: {error}")
             ident = None
+        else:
+            if delete_attachments:
+                for attachment in mail.attachments:
+                    os.remove(attachment)
         return ident
 
 # TODO: Change InvoicerAccount -> OrderAccount
@@ -202,7 +230,7 @@ class InvoicerAccount:
             subject="Neue Kunden-E-Mail",
             html=html
         )
-        self._mailing.send_mail(mail=mail)
+        self._mailing.send_mail(mail=mail, delete_attachments=True)
         self._mailing.add_label(
             mail_id=customer_mail.ident,
             label_id=self.forwarded_label_id
@@ -235,10 +263,7 @@ class InvoicerAccount:
             html=html,
             attachments=[invoice]
         )
-        self._mailing.send_mail(mail=mail)
-
-        if delete_invoice:
-            os.remove(invoice)
+        self._mailing.send_mail(mail=mail, remove_attachment=delete_invoice)
 
         self._mailing.add_label(mail_id=order.source_mail.ident, label_id=self.invoiced_label_id)
     
