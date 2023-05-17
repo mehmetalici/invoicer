@@ -238,7 +238,7 @@ class InvoicerAccount:
 
     def inform_customer_forwarded(self, customer_mail: Mail):
         # body = MailBodyGenerator.get_inform_forwarded_body(reply=reply, cfg=self.cfg)
-        html = create_inform_forwarded_mail_body(forward_address=self.cfg.invoiceMail.to)
+        html = create_inform_forwarded_mail_body()
         mail = Mail(
             sender="me",
             to=customer_mail.sender,
@@ -373,11 +373,11 @@ def create_forward_mail_body(customer_mail: Mail, salute_name: str):
     return html
 
 
-def create_inform_forwarded_mail_body(forward_address: str):
+def create_inform_forwarded_mail_body():
     html = f"""
         Sehr geehrte(r) Absender(in),
         <p>
-        vielen Dank für Ihre Kontaktaufnahme. Ihre E-Mail wurde an {forward_address} weitergeleitet und wird so schnell wie möglich bearbeitet.
+        vielen Dank für Ihre Kontaktaufnahme. Ihre E-Mail ist bei uns eingegangen und wird so schnell wie möglich bearbeitet.
         </p>
         <p>
         Dies ist eine automatische Antwort, bitte antworten Sie nicht darauf.
