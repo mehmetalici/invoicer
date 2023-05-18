@@ -263,7 +263,7 @@ class InvoicerAccount:
             html=html,
             attachments=[invoice]
         )
-        self._mailing.send_mail(mail=mail, remove_attachment=delete_invoice)
+        self._mailing.send_mail(mail=mail, delete_attachments=delete_invoice)
 
         self._mailing.add_label(mail_id=order.source_mail.ident, label_id=self.invoiced_label_id)
     
