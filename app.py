@@ -1,3 +1,4 @@
+from ast import parse
 import logging
 from pathlib import Path
 from time import sleep
@@ -38,10 +39,10 @@ def main(config_file: Path, credentials_file: Path, token_file: Path, template_f
         if len(customer_mails) > 0:
             logging.info(f"{len(customer_mails)} customer mails are found")
             for customer_mail in customer_mails:
-                invoicer_account.forward_customer_mail(customer_mail=customer_mail)
+                invoicer_account.forward_customer_mail(parsed_mail=customer_mail)
                 logging.info(f"Customer mail was forwarded to seller.")
-                invoicer_account.inform_customer_forwarded(customer_mail=customer_mail)
-                logging.info(f"Customer was informed with forwarding.")
+                # invoicer_account.inform_customer_forwarded(customer_mail=customer_mail)
+                # logging.info(f"Customer was informed with forwarding.")
         else:
             logging.info("No new customer emails are found.")
 

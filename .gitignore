@@ -134,3 +134,4 @@ dmypy.json
 .last_invoice_count
 docs/Invoice*
 docs/template.docx
+config/

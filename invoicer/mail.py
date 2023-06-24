@@ -24,12 +24,24 @@ class Mail:
             raise Exception("html and plain_text fields cannot be both None.") 
 
 @dataclass
+class ParsedMail:
+    errors: List[str]
+    mail: Mail
+
+
+@dataclass
 class GmailAttachment:
     ident: str
     filename: str
-    
 
-def payload_to_mail(payload: dict, ident: str) -> Mail:
+
+class EmailPartExtractError(Exception):
+    def __init__(self, mime_type, msg=None) -> None:
+        super().__init__(msg)
+        self.mime_type = mime_type
+
+
+def payload_to_mail(payload: dict, ident: str) -> ParsedMail:
     headers = payload["headers"]
     subject = get_header(headers, "Subject")
     sender = get_header(headers, "From")
@@ -40,20 +52,22 @@ def payload_to_mail(payload: dict, ident: str) -> Mail:
     plain_text_encoded = None
     html_encoded = None
     gmail_attachments = []
+    errors = []
     # TODO: Should be done recursively
     if "multipart/" in mime_type:
-        # TODO: Looks ugly 
+        # TODO: Looks ugly is buggy. Should implement/find DFS/BFS
         for part in payload["parts"]:
             mime_type = part["mimeType"]
             if mime_type == "text/plain":
                 plain_text_encoded = part["body"]["data"]
             elif mime_type == "text/html":
                 html_encoded = part["body"]["data"]
-            elif "image" or "pdf" in part["mimeType"]:
+            elif "image" in part["mimeType"] or "pdf" in part["mimeType"]:
                 att = GmailAttachment(ident=part["body"]["attachmentId"], filename=part["filename"])
                 gmail_attachments.append(att)
             else:
-                logging.warning(f"Unexpected mimeType: {mime_type}")
+                errors.append(f"Unexpected mimeType: {mime_type}")
+
     elif mime_type == "text/plain":
         plain_text_encoded = payload["body"]["data"]
     elif mime_type == "text/html":
@@ -69,7 +83,13 @@ def payload_to_mail(payload: dict, ident: str) -> Mail:
     if html_encoded:
         html = base64.urlsafe_b64decode(html_encoded).decode()
 
-    return Mail(sender=parseaddr(sender)[1], to=parseaddr(to)[1], date=date, subject=subject, plain_text=plain_text, html=html, ident=ident), gmail_attachments
+    return Mail(sender=parseaddr(sender)[1], 
+                to=parseaddr(to)[1], 
+                date=date, 
+                subject=subject, 
+                plain_text=plain_text, 
+                html=html, 
+                ident=ident), gmail_attachments, errors
 
 
 def get_header(headers: dict, name: str) -> str:
@@ -78,5 +98,6 @@ def get_header(headers: dict, name: str) -> str:
 
 def from_gmail(gmail: dict) -> Tuple[Mail, List[GmailAttachment]]:
     payload = gmail["payload"]
-    mail, gmail_attachment = payload_to_mail(payload=payload, ident=gmail["id"])
-    return mail, gmail_attachment
+    mail, gmail_attachment, errors = payload_to_mail(payload=payload, ident=gmail["id"])
+    return mail, gmail_attachment, errors
+
