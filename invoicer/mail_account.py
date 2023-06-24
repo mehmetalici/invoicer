@@ -20,7 +20,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from invoicer.config import Config
-from invoicer.mail import Mail, from_gmail
+from invoicer.mail import Mail, ParsedMail, from_gmail
 from invoicer.order import Order
 from invoicer.order_mail_parsers import order_from_mail
 
@@ -80,14 +80,14 @@ class GmailAccount:
                 token.write(creds.to_json())
         return creds
 
-    def search_mails(self, query: str) -> Tuple[Mail]:
+    def search_mails(self, query: str) -> Tuple[ParsedMail]:
         msg_ids = self._list_mail_ids(query=query)
         gmails = self._get_mails(msg_ids=msg_ids)
         mails = [self._get_mail(g) for g in gmails]
         return tuple(mails)
 
-    def _get_mail(self, gmail: dict):
-        mail, gmail_attachments = from_gmail(gmail)
+    def _get_mail(self, gmail: dict) -> ParsedMail:
+        mail, gmail_attachments, errors = from_gmail(gmail)
         if len(gmail_attachments) > 0:
             for gmail_attachment in gmail_attachments:
                 out_path = gmail_attachment.filename
@@ -95,7 +95,8 @@ class GmailAccount:
                     msg_id=mail, att_id=gmail_attachment.ident, out_path=Path(out_path)
                 )
                 mail.attachments.append(out_path)
-        return mail
+        
+        return ParsedMail(mail=mail, errors=errors)
 
     def _get_attachment(self, msg_id: str, att_id: str, out_path: Path):
         att = (
@@ -205,6 +206,7 @@ class InvoicerAccount:
         self.invoiced_label_id = self._mailing.create_label("Invoiced")
         # TODO: Create MailLabel dataclass
         self.forwarded_label_id = self._mailing.create_label("Forwarded")
+        self.forwarded_with_errors_label_id = self._mailing.create_label("Forwarded with Errors")
 
     def search_new_orders(self) -> Tuple[Order]:
         mails = self._mailing.search_mails(
@@ -214,26 +216,39 @@ class InvoicerAccount:
         return orders
 
     def search_new_customer_mails(self) -> Tuple[Mail]:
-        senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:amazon.com from:amazonaws.com from:signup.aws from:google.com"
+        senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:me from:amazon.com from:amazonaws.com from:signup.aws from:google.com"
+        labels_to_exclude = "label:Forwarded label:\"Forwarded with Errors\" label:Manual Forwarded"
         # TODO: After date fix to release date
         mails = self._mailing.search_mails(
-            query=f"-{{{senders_to_exclude}}} in:inbox -label:Forwarded after:2023/05/07"
+            query=f"-{{{senders_to_exclude}}} in:inbox -{{{labels_to_exclude}}} after:2023/06/19"
         )
         return mails
 
-    def forward_customer_mail(self, customer_mail: Mail) -> None:
-        html = create_forward_mail_body(customer_mail=customer_mail, salute_name=self.cfg.invoiceMail.saluteName)
-        # body = MailBodyGenerator.get_forward_reply_body(reply=reply, cfg=self.cfg)
+    def forward_customer_mail(self, parsed_mail: ParsedMail) -> None:
+        customer_mail = parsed_mail.mail
+        errors = parsed_mail.errors
+
+        html = create_forward_mail_body(customer_mail=customer_mail, salute_name=self.cfg.invoiceMail.saluteName, errors=errors)
+
+        subject = "Neue Kunden-E-Mail"
+        if len(errors) > 0:
+            subject = "Achtung: Neue Kunden-E-Mail mit Fehler"
+
         mail = Mail(
             sender="me",
             to=self.cfg.invoiceMail.to,
-            subject="Neue Kunden-E-Mail",
+            subject=subject,
             html=html
         )
         self._mailing.send_mail(mail=mail, delete_attachments=True)
+
+        label_id = self.forwarded_label_id        
+        if len(errors) > 0:
+            label_id = self.forwarded_with_errors_label_id
+
         self._mailing.add_label(
             mail_id=customer_mail.ident,
-            label_id=self.forwarded_label_id
+            label_id=label_id
         )
 
     def inform_customer_forwarded(self, customer_mail: Mail):
@@ -337,7 +352,7 @@ def create_invoice_mail_body(salute_name: str, order: Order, errors: Optional[Li
     return html
 
 
-def create_forward_mail_body(customer_mail: Mail, salute_name: str):
+def create_forward_mail_body(customer_mail: Mail, salute_name: str, errors: List[str]):
     html = f"""
         Hallo {salute_name},
         <p/>
@@ -345,6 +360,24 @@ def create_forward_mail_body(customer_mail: Mail, salute_name: str):
         ich habe eine neue E-Mail in meinem Posteingang erhalten und möchte sie mit dieser E-Mail mit dir teilen.
         </p>
         <p/>
+    """
+
+    if errors is not None and len(errors) > 0:
+        errors_as_str = '\n'.join(errors)
+        html += f"""
+            <b>
+            <p>
+            Es tut mir auch leid, dass ich die E-Mail, die ich erhalten habe, nicht ganz verstanden habe. Daher kann es sein, dass die nachstehende E-Mail nicht vollständig ist, d.h. dass Anhänge fehlen könnten.
+            </p>
+            <p>
+            Bitte teile den folgenden Fehler mit meinem Projektbetreuer:</b>
+            {errors_as_str}
+            </p>
+            </b>
+            <p/>
+        """
+    
+    html += f"""
         <p>
         Wenn du darauf antworten möchtest, antworte bitte <b>nicht</b> auf diese E-Mail und erstelle stattdessen eine neue E-Mail für den Absender. 
         </p>

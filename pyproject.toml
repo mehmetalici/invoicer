@@ -6,7 +6,7 @@ authors = ["Mehmet Y. Alici <calientesea@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10.7"
+python = "^3.10.6"
 google-api-python-client = "^2.70.0"
 google-auth-httplib2 = "^0.1.0"
 google-auth-oauthlib = "^0.8.0"

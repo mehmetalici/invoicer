@@ -70,9 +70,7 @@ For both options, you should first do the prerequisites:
             "saluteName": "Maximiliane"
         },
         "invoiceCountStart": 0,
-        "pollInterval": 10,
-        "invoiceTemplatePath": "./docs/template_sample.docx",
-        "OAuth2AppCredentialsPath": "/path/to/your/credentials.json"
+        "pollInterval": 10
     }
     ```
     **Explanation for the fields**:
@@ -82,8 +80,6 @@ For both options, you should first do the prerequisites:
     - **invoiceMail.saluteName**: Salutation name for the email address holder
     - **invoiceCountStart**: Last invoice number before the start of Gmail bot
     - **pollInterval**: Period of polls in seconds for checking any incoming order confirmation emails 
-    - **invoiceTemplatePath**: Path to your invoice template 
-    - **OAuth2CredentialsPath**: Path to your credentials file obtained from Google Cloud console. Refer to the following step to create one.
 
 5. For Google OAuth Servers to identify the app, create a OAuth2 Client ID for the app following the instructions on below link:
 
@@ -109,7 +105,7 @@ docker run -it -v /path/to/your/config.json:/etc/invoicer/config.json -v /path/t
     
     Install it from https://python-poetry.org/docs/.
 
-2. Python ^3.10.7
+2. Python ^3.10.6
 
     You can use Pyenv https://github.com/pyenv/pyenv.
 
@@ -130,10 +126,11 @@ docker run -it -v /path/to/your/config.json:/etc/invoicer/config.json -v /path/t
 1. If you run for the first time, a web page will prompt you to authenticate your Gmail account and authorize the bot to manage the account.
 2. After the authentication flow has completed, the app will start to its normal operation and output the following information:
     ```
-    2023-01-24 21:55:05 INFO     Searching for orders...
-    2023-01-24 21:55:05 INFO     No new orders are found.
-    2023-01-24 21:55:05 INFO     Sleeping for 10s
-    2023-01-24 21:55:15 INFO     Searching for orders...
+    2023-06-24 15:33:32 INFO     Searching for orders...
+    2023-06-24 15:33:32 INFO     No new orders are found.
+    2023-06-24 15:33:32 INFO     Searching for customer emails...
+    2023-06-24 15:33:32 INFO     No new customer emails are found.
+    2023-06-24 15:33:32 INFO     Waiting for 10s
     ```
 3. If a new order confirmation mail appears, it will output the following:
     ```
