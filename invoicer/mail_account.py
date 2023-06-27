@@ -1,4 +1,5 @@
 from __future__ import print_function
+from ast import parse
 
 import base64
 import logging
@@ -209,9 +210,15 @@ class InvoicerAccount:
         self.forwarded_with_errors_label_id = self._mailing.create_label("Forwarded with Errors")
 
     def search_new_orders(self) -> Tuple[Order]:
-        mails = self._mailing.search_mails(
+        parsed_mails = self._mailing.search_mails(
             query=f'from:{self.cfg.orderMail.sender} subject:"{self.cfg.orderMail.subjectHas}" -label:Invoiced'
         )
+
+        mails = []
+        for parsed_mail in parsed_mails:
+            assert len(parsed_mail.errors) == 0
+            mails.append(parsed_mail.mail)
+        
         orders = tuple(map(order_from_mail, mails))
         return orders
 
