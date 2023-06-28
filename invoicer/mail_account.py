@@ -216,6 +216,7 @@ class InvoicerAccount:
 
         mails = []
         for parsed_mail in parsed_mails:
+            # TODO: Handle here better.
             assert len(parsed_mail.errors) == 0
             mails.append(parsed_mail.mail)
         

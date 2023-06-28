@@ -127,7 +127,6 @@ def order_from_mail(mail: Mail):
     """
     Find parser of provider and parse.
     """
-    mail = mail.mail
     parser = OrderMailParser(subject=mail.subject, body=mail.plain_text)
     order = Order(
         source_mail=mail,
