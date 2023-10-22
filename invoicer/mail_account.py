@@ -91,9 +91,9 @@ class GmailAccount:
         mail, gmail_attachments, errors = from_gmail(gmail)
         if len(gmail_attachments) > 0:
             for gmail_attachment in gmail_attachments:
-                out_path = gmail_attachment.filename
+                out_path = Path(gmail_attachment.filename)
                 self._get_attachment(
-                    msg_id=mail.ident, att_id=gmail_attachment.ident, out_path=Path(out_path)
+                    msg_id=mail.ident, att_id=gmail_attachment.ident, out_path=out_path
                 )
                 mail.attachments.append(out_path)
         
@@ -224,7 +224,7 @@ class InvoicerAccount:
         orders = tuple(map(order_from_mail, mails))
         return orders
 
-    def search_new_customer_mails(self) -> Tuple[Mail]:
+    def search_new_customer_mails(self) -> Tuple[ParsedMail]:
         senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:me from:amazon.com from:amazonaws.com from:signup.aws from:google.com"
         labels_to_exclude = "label:Forwarded label:\"Forwarded with Errors\" label:Manual Forwarded"
         # TODO: After date fix to release date
@@ -236,7 +236,6 @@ class InvoicerAccount:
     def forward_customer_mail(self, parsed_mail: ParsedMail) -> None:
         customer_mail = parsed_mail.mail
         errors = parsed_mail.errors
-
         html = create_forward_mail_body(customer_mail=customer_mail, salute_name=self.cfg.invoiceMail.saluteName, errors=errors)
 
         subject = "Neue Kunden-E-Mail"
@@ -247,7 +246,8 @@ class InvoicerAccount:
             sender="me",
             to=self.cfg.invoiceMail.to,
             subject=subject,
-            html=html
+            html=html,
+            attachments=customer_mail.attachments
         )
         self._mailing.send_mail(mail=mail, delete_attachments=True)
 
