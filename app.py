@@ -30,7 +30,7 @@ def main(config_file: Path, credentials_file: Path, token_file: Path, template_f
             for order in orders:
                 invoice_path, errors = invoice_generator.generate(order=order)
                 logging.info(f"Invoice is created at {invoice_path}")
-                invoicer_account.send_invoice(order=order, errors=errors, invoice=invoice_path, delete_invoice=True)
+                # invoicer_account.send_invoice(order=order, errors=errors, invoice=invoice_path, delete_invoice=True)
         else:
             logging.info(f"No new orders are found.")
         
@@ -43,6 +43,7 @@ def main(config_file: Path, credentials_file: Path, token_file: Path, template_f
                 logging.info(f"Customer mail was forwarded to seller.")
                 # invoicer_account.inform_customer_forwarded(customer_mail=customer_mail)
                 # logging.info(f"Customer was informed with forwarding.")
+                pass
         else:
             logging.info("No new customer emails are found.")
 

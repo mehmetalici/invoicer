@@ -93,24 +93,25 @@ class GmailAccount:
             for gmail_attachment in gmail_attachments:
                 out_path = gmail_attachment.filename
                 self._get_attachment(
-                    msg_id=mail, att_id=gmail_attachment.ident, out_path=Path(out_path)
+                    msg_id=mail.ident, att_id=gmail_attachment.ident, out_path=Path(out_path)
                 )
                 mail.attachments.append(out_path)
         
         return ParsedMail(mail=mail, errors=errors)
 
     def _get_attachment(self, msg_id: str, att_id: str, out_path: Path):
-        att = (
-            self.service.users()
-            .messages()
-            .attachments()
-            .get(userId="me", messageId=msg_id, id=att_id)
-            .execute()
-        )
-        data = att["data"]
-        file_data = base64.urlsafe_b64decode(data)
-        out_path.write_bytes(file_data)
+        message = self.service.users().messages().get(userId="me", id=msg_id).execute()
 
+        for part in message['payload']['parts']:
+            if part['filename']:
+                if 'data' in part['body']:
+                    data = part['body']['data']
+                else:
+                    att_id = part['body']['attachmentId']
+                    att = self.service.users().messages().attachments().get(userId="me", messageId=msg_id, id=att_id).execute()
+                    data = att['data']
+                file_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
+                out_path.write_bytes(file_data)
 
     def _list_mail_ids(self, query: str) -> List[str]:
         maxResults = 100
