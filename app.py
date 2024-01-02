@@ -30,7 +30,7 @@ def main(config_file: Path, credentials_file: Path, token_file: Path, template_f
             for order in orders:
                 invoice_path, errors = invoice_generator.generate(order=order)
                 logging.info(f"Invoice is created at {invoice_path}")
-                # invoicer_account.send_invoice(order=order, errors=errors, invoice=invoice_path, delete_invoice=True)
+                invoicer_account.send_invoice(order=order, errors=errors, invoice=invoice_path, delete_invoice=True)
         else:
             logging.info(f"No new orders are found.")
         
