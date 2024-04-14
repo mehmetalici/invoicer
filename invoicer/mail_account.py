@@ -225,7 +225,7 @@ class InvoicerAccount:
         return orders
 
     def search_new_customer_mails(self) -> Tuple[ParsedMail]:
-        senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:me from:amazon.com from:amazonaws.com from:signup.aws from:google.com"
+        senders_to_exclude = f"from:{self.cfg.orderMail.sender} from:me from:amazon.com from:amazonaws.com from:signup.aws from:google.com from:verify.signin.aws"
         labels_to_exclude = "label:Forwarded label:\"Forwarded with Errors\" label:Manual Forwarded"
         # TODO: After date fix to release date
         mails = self._mailing.search_mails(
@@ -256,8 +256,8 @@ class InvoicerAccount:
             label_id = self.forwarded_with_errors_label_id
 
         self._mailing.add_label(
-            mail_id=customer_mail.ident,
-            label_id=label_id
+           mail_id=customer_mail.ident,
+           label_id=label_id
         )
 
     def inform_customer_forwarded(self, customer_mail: Mail):
@@ -411,7 +411,7 @@ def create_forward_mail_body(customer_mail: Mail, salute_name: str, errors: List
     elif customer_mail.plain_text:
         html += customer_mail.plain_text
     else:
-        html += "Beim Erfassen der Kundenpost ist ein Fehler aufgetreten. Bitte informieren Sie den Entwickler."
+        html += "<b> Beim Erfassen der Kundenpost ist ein Fehler aufgetreten. Bitte informieren Sie den Entwickler. <b>"
     return html
 
 

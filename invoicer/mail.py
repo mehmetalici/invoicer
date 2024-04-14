@@ -21,7 +21,8 @@ class Mail:
     def __post_init__(self):
         if [self.html, self.plain_text] == [None, None]:
             # TODO: Why?
-            raise Exception("html and plain_text fields cannot be both None.") 
+            # raise Exception("html and plain_text fields cannot be both None.") 
+            logging.warn("html and plain_text fields are both None.")
 
 @dataclass
 class ParsedMail:
@@ -82,7 +83,6 @@ def payload_to_mail(payload: dict, ident: str) -> ParsedMail:
     html = None
     if html_encoded:
         html = base64.urlsafe_b64decode(html_encoded).decode()
-
     return Mail(sender=parseaddr(sender)[1], 
                 to=parseaddr(to)[1], 
                 date=date, 
