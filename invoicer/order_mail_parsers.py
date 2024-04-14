@@ -74,15 +74,18 @@ class OrderMailParser:
             flags=re.M,
         )
 
-        invoice_address = p.search(self.body).group(1).split("\\r\\n")
-        country_index = _find_country_index(invoice_address)
+        invoice_address = p.search(self.body).group(1)
+        invoice_address = invoice_address.replace("Tschechische Republik", "Czechia")  # Compatibility workaround TODO: Can be dangerous.
+        invoice_address_parts = invoice_address.split("\\r\\n")
+
+        country_index = find_country_index(invoice_address_parts)
         residential_address_end_index = country_index
 
         residential_address = "\n".join(
-            invoice_address[1 : residential_address_end_index + 1]
+            invoice_address_parts[1 : residential_address_end_index + 1]
         )
 
-        address = Address(full_name=invoice_address[0], address=residential_address)
+        address = Address(full_name=invoice_address_parts[0], address=residential_address)
         return address
 
 
@@ -94,7 +97,7 @@ class OrderMailParser:
      
 
 
-def _find_country_index(address: List[str]):
+def find_country_index(address: List[str]):
     german = gettext.translation("iso3166", pycountry.LOCALES_DIR, languages=["de"])
     german.install()
     countries = tuple(map(lambda c: _(c.name), pycountry.countries))
@@ -112,15 +115,6 @@ def _simplify_payment_method(payment_method: str):
     if "Stripe" in payment_method:
         return "Stripe"
     return payment_method
-
-
-def find_country_index(address: List[str]):
-    german = gettext.translation("iso3166", pycountry.LOCALES_DIR, languages=["de"])
-    german.install()
-    countries = tuple(map(lambda c: _(c.name), pycountry.countries))
-    for part in address:
-        if part in countries:
-            return address.index(part)
 
 
 def order_from_mail(mail: Mail):
