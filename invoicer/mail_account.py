@@ -282,24 +282,6 @@ class InvoicerAccount:
            label_id=label_id
         )
 
-    def inform_customer_forwarded(self, customer_mail: Mail):
-        # body = MailBodyGenerator.get_inform_forwarded_body(reply=reply, cfg=self.cfg)
-        html = create_inform_forwarded_mail_body()
-        mail = Mail(
-            sender="me",
-            to=customer_mail.sender,
-            subject=f"AW: {customer_mail.subject}",
-            html=html
-        )
-        self._mailing.send_mail(mail=mail)
-
-    # def forward_new_replies_to_seller(inform_customer=True):
-        # replies = self.search_new_replies()
-        # for reply in replies:
-            # self.forward_reply(reply)
-            # self.inform_customer_forwarded(reply)
-            # self.gmail.label_mail(id=reply.id, label="Forwarded")
-
     def send_invoice(self, order: Order, invoice: Path, delete_invoice=True, errors: Optional[List[str]] = None):
         html = create_invoice_mail_body(salute_name=self.cfg.invoiceMail.saluteName, order=order, errors=errors)
         mail = Mail(
@@ -453,23 +435,6 @@ def create_forward_mail_body(customer_mail: Mail, salute_name: str, errors: List
         html += customer_mail.plain_text
     else:
         html += "<b> Beim Erfassen der Kundenpost ist ein Fehler aufgetreten. Bitte informieren Sie den Entwickler. <b>"
-    return html
-
-
-def create_inform_forwarded_mail_body():
-    html = f"""
-        Sehr geehrte(r) Absender(in),
-        <p>
-        vielen Dank für Ihre Kontaktaufnahme. Ihre E-Mail ist bei uns eingegangen und wird so schnell wie möglich bearbeitet.
-        </p>
-        <p>
-        Dies ist eine automatische Antwort, bitte antworten Sie nicht darauf.
-        </p>
-        <p>
-            Viele Grüße,<br>
-            Ihr Laden <br>
-        </p> 
-    """
     return html
 
 

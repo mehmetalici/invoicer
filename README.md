@@ -41,8 +41,8 @@ The bot parses and converts it to the following print-ready invoice seconds afte
 
 After generating the invoice above, the bot sends it to the seller with email as attachment.
 
-## New: Replying Customer Emails
-Occassionally, customers send emails to the Invoicer email address and they may left unanswered as the account is a service account. To fix this problem, the bot now forwards these emails to seller and informs the customer about the forwarding. 
+## New: Forwarding Customer Emails
+Occassionally, customers send emails to the Invoicer email address and they may be left unanswered as the account is a service account. To fix this problem, the bot forwards these emails to the seller.
 
 ## Running a Demo
 You can run a demo by either of the following:

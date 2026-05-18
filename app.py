@@ -41,9 +41,6 @@ def main(config_file: Path, credentials_file: Path, token_file: Path, template_f
             for customer_mail in customer_mails:
                 invoicer_account.forward_customer_mail(parsed_mail=customer_mail)
                 logging.info(f"Customer mail was forwarded to seller.")
-                # invoicer_account.inform_customer_forwarded(customer_mail=customer_mail)
-                # logging.info(f"Customer was informed with forwarding.")
-                pass
         else:
             logging.info("No new customer emails are found.")
 
