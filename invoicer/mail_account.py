@@ -6,6 +6,7 @@ import logging
 import mimetypes
 import os
 import os.path
+import tempfile
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
@@ -24,6 +25,9 @@ from invoicer.config import Config
 from invoicer.mail import Mail, ParsedMail, from_gmail
 from invoicer.order import Order
 from invoicer.order_mail_parsers import order_from_mail
+
+
+ATTACHMENT_DIR = Path(tempfile.gettempdir()) / "invoicer-attachments"
 
 
 class GmailAccount:
@@ -90,28 +94,43 @@ class GmailAccount:
     def _get_mail(self, gmail: dict) -> ParsedMail:
         mail, gmail_attachments, errors = from_gmail(gmail)
         if len(gmail_attachments) > 0:
-            for gmail_attachment in gmail_attachments:
-                out_path = Path(gmail_attachment.filename)
-                self._get_attachment(
-                    msg_id=mail.ident, att_id=gmail_attachment.ident, out_path=out_path
+            attachment_dir = ATTACHMENT_DIR / mail.ident
+            attachment_dir.mkdir(parents=True, exist_ok=True)
+            used_attachment_names = set()
+            for index, gmail_attachment in enumerate(gmail_attachments):
+                out_path = _unique_attachment_path(
+                    directory=attachment_dir,
+                    filename=gmail_attachment.filename,
+                    used_names=used_attachment_names,
+                    fallback_name=f"attachment-{index}",
                 )
+                if gmail_attachment.data is not None:
+                    self._write_attachment_data(
+                        data=gmail_attachment.data, out_path=out_path
+                    )
+                elif gmail_attachment.ident:
+                    self._get_attachment(
+                        msg_id=mail.ident,
+                        att_id=gmail_attachment.ident,
+                        out_path=out_path,
+                    )
                 mail.attachments.append(out_path)
         
         return ParsedMail(mail=mail, errors=errors)
-
+    
     def _get_attachment(self, msg_id: str, att_id: str, out_path: Path):
-        message = self.service.users().messages().get(userId="me", id=msg_id).execute()
+        attachment = (
+            self.service.users()
+            .messages()
+            .attachments()
+            .get(userId="me", messageId=msg_id, id=att_id)
+            .execute()
+        )
+        self._write_attachment_data(data=attachment["data"], out_path=out_path)
 
-        for part in message['payload']['parts']:
-            if part['filename']:
-                if 'data' in part['body']:
-                    data = part['body']['data']
-                else:
-                    att_id = part['body']['attachmentId']
-                    att = self.service.users().messages().attachments().get(userId="me", messageId=msg_id, id=att_id).execute()
-                    data = att['data']
-                file_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
-                out_path.write_bytes(file_data)
+    def _write_attachment_data(self, data: str, out_path: Path):
+        file_data = base64.urlsafe_b64decode(data.encode("UTF-8"))
+        out_path.write_bytes(file_data)
 
     def _list_mail_ids(self, query: str) -> List[str]:
         maxResults = 100
@@ -196,7 +215,10 @@ class GmailAccount:
         else:
             if delete_attachments:
                 for attachment in mail.attachments:
-                    os.remove(attachment)
+                    try:
+                        os.remove(attachment)
+                    except FileNotFoundError:
+                        logging.warning("Attachment %s was already removed.", attachment)
         return ident
 
 # TODO: Change InvoicerAccount -> OrderAccount
@@ -306,6 +328,8 @@ def attach_file(mime_message, attachment_path):
     # attachment
     # guessing the MIME type
     type_subtype, _ = mimetypes.guess_type(attachment_path.name)
+    if type_subtype is None:
+        type_subtype = "application/octet-stream"
     maintype, subtype = type_subtype.split("/")
 
     with open(attachment_path, "rb") as fp:
@@ -318,6 +342,23 @@ def attach_file(mime_message, attachment_path):
         "Content-Disposition", "attachment", filename=attachment_path.name
     )
     mime_message.attach(attachment)
+
+
+def _unique_attachment_path(
+    directory: Path, filename: str, used_names: set[str], fallback_name: str
+) -> Path:
+    clean_name = Path(filename).name or fallback_name
+    candidate = clean_name
+    stem = Path(clean_name).stem
+    suffix = Path(clean_name).suffix
+    counter = 1
+
+    while candidate in used_names:
+        candidate = f"{stem}-{counter}{suffix}"
+        counter += 1
+
+    used_names.add(candidate)
+    return directory / candidate
 
 
 def create_invoice_mail_body(salute_name: str, order: Order, errors: Optional[List[str]] = None):

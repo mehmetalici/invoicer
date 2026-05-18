@@ -32,8 +32,9 @@ class ParsedMail:
 
 @dataclass
 class GmailAttachment:
-    ident: str
     filename: str
+    ident: Optional[str] = None
+    data: Optional[str] = None
 
 
 class EmailPartExtractError(Exception):
@@ -54,20 +55,32 @@ def payload_to_mail(payload: dict, ident: str) -> ParsedMail:
     html_encoded = None
     gmail_attachments = []
     errors = []
-    # TODO: Should be done recursively
     if "multipart/" in mime_type:
-        # TODO: Looks ugly is buggy. Should implement/find DFS/BFS
-        for part in payload["parts"]:
-            mime_type = part["mimeType"]
-            if mime_type == "text/plain":
+        parts_to_visit = list(payload["parts"])
+        while parts_to_visit:
+            part = parts_to_visit.pop(0)
+            part_mime_type = part["mimeType"]
+            if "parts" in part:
+                parts_to_visit.extend(part["parts"])
+            elif part_mime_type == "text/plain" and "data" in part["body"]:
                 plain_text_encoded = part["body"]["data"]
-            elif mime_type == "text/html":
+            elif part_mime_type == "text/html" and "data" in part["body"]:
                 html_encoded = part["body"]["data"]
-            elif "image" in part["mimeType"] or "pdf" in part["mimeType"]:
-                att = GmailAttachment(ident=part["body"]["attachmentId"], filename=part["filename"])
-                gmail_attachments.append(att)
+            elif ("image" in part_mime_type or "pdf" in part_mime_type) and part.get(
+                "filename"
+            ):
+                body = part["body"]
+                if "attachmentId" in body or "data" in body:
+                    att = GmailAttachment(
+                        ident=body.get("attachmentId"),
+                        data=body.get("data"),
+                        filename=part["filename"],
+                    )
+                    gmail_attachments.append(att)
+                else:
+                    errors.append(f"Attachment without data: {part['filename']}")
             else:
-                errors.append(f"Unexpected mimeType: {mime_type}")
+                errors.append(f"Unexpected mimeType: {part_mime_type}")
 
     elif mime_type == "text/plain":
         plain_text_encoded = payload["body"]["data"]
@@ -100,4 +113,3 @@ def from_gmail(gmail: dict) -> Tuple[Mail, List[GmailAttachment]]:
     payload = gmail["payload"]
     mail, gmail_attachment, errors = payload_to_mail(payload=payload, ident=gmail["id"])
     return mail, gmail_attachment, errors
-
